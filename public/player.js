@@ -3,11 +3,16 @@
  */
 var Player = {};
 MOUSEFREQ = 50;
-RADIUS_FACTOR = .90;
+RADIUS_FACTOR = .80;
 
 Player.size = 50;
-Player.speed = 10;
+Player.speed = 5;
 Player.radius = getRadius(Player.size);
+img = new Image();
+img.src = "/resources/playerRamio.svg";
+
+enemyRam = new Image();
+enemyRam.src = "/resources/enemyRam.svg";
 
 Player.initialize = function(id, position, color) {
     this.id = id;

@@ -15,7 +15,7 @@ socket.on('PlayerSetup', function (data) {
 });
 
 socket.on('PlayerUpdate', function(data){
-    Game.entities[data.id] = [data.x, data.y, data.size, data.color];
+    Game.entities[data.id] = [data.x, data.y, data.size, data.color, data.radius];
 });
 
 //TODO make growth more dynamic, not just by one

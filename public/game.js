@@ -5,6 +5,7 @@
 var Game = {};
 // curently static grass patch size
 var GRASS_SIZE = 10;
+var SVG_MULTIPLIER = 1.6;
 
 // fps denotes times game will be updated per second and sent out to server
 Game.fps = 45;
@@ -35,7 +36,8 @@ Game.run = function() {
 
     while ((new Date).getTime() > nextGameTick && loops < maxFrameSkip) {
         updateCoordinates();
-        socket.emit('PlayerUpdate', { id: Player.id, x: Player.x, y: Player.y, size: Player.size, color: Player.color });
+        //TODO: implement angle in PlayerUpdate
+        socket.emit('PlayerUpdate', { id: Player.id, x: Player.x, y: Player.y, size: Player.size, color: Player.color, angle: Player.angle });
         // console.log ( 'sent player location to server' );
         nextGameTick += skipTicks;
         loops++;
@@ -83,32 +85,49 @@ function drawMap(players,grass) {
     ctx.clearRect(0, 0, c.width, c.height);
     var i;
     for (i = -(Player.y % GridSize); i < Height; i += GridSize) {
+        ctx.beginPath();
         ctx.lineWidth = 1;
         ctx.moveTo(0, i);
         ctx.lineTo(Width, i);
         ctx.stroke();
+        ctx.closePath();
     }
     for (i = -(Player.x % GridSize); i < Width; i += GridSize) {
+        ctx.beginPath();
         ctx.lineWidth = 1;
         ctx.moveTo(i, 0);
         ctx.lineTo(i, Height);
         ctx.stroke();
+        ctx.closePath();
     }
 
     for (var key in players) {
         if (Player.id != key && players[key] != null) {
-            //TODO make sure that log2 is the correct size
-            //TODO ensure that this is correct way to look up sub index
+            //TODO implement enemy ram
             var offsetX = players[key][0] - Player.x;
             var offsetY = players[key][1] - Player.y;
             var radius = getRadius(players[key][2]);
             if (Math.abs(offsetX) < Width/2 + radius && Math.abs(offsetY) < Height/2 + radius) {
                 drawCircle(radius, Width/2 + offsetX, Height/2 + offsetY, players[key][3]);
+                //TODO Make this a function?
+                // rotateAndPaintImage(ctx, img, Player.angle, Width/2 - Player.radius/2, Height/2 - Player.radius/2, Player.radius, Player.radius );
+                // ctx.translate(Width/2 + offsetX, Height/2 + offsetY);
+                // ctx.rotate(players[key][4] - Math.PI/2);
+                // ctx.drawImage(enemyRam,-radius,-Player.radius,2*players[key][3],2*players[key][3]);
+                // ctx.rotate(-players[key][4] + Math.PI/2);
+                // ctx.translate(-Width/2 - offsetX, -Height/2 - offsetY);
+
             }
         }
     }
-    //TODO always keep the player in the center of the screen?
-    drawCircle(Player.radius, Width/2, Height/2, Player.color);
+    //TODO Make this a function?
+    // rotateAndPaintImage(ctx, img, Player.angle, Width/2 - Player.radius/2, Height/2 - Player.radius/2, Player.radius, Player.radius );
+    ctx.translate(Width/2, Height/2);
+    ctx.rotate(Player.angle - Math.PI/2);
+    ctx.drawImage(img,-Player.radius,-Player.radius,2*Player.radius,2*Player.radius);
+    ctx.rotate(-Player.angle + Math.PI/2);
+    ctx.translate(-Width/2, -Height/2);
+    // drawCircle(Player.radius, Width/2, Height/2, Player.color);
 
     for (i = 0; i < grass.length; i++) {
         if (grass[i] != null) {
@@ -139,4 +158,13 @@ function drawCircle(size, xPos, yPos, color) {
 function log2(val) {
     return Math.log(val) / Math.LN2;
 }
+
+function rotateAndPaintImage ( context, image, angleInRad , positionX, positionY, axisX, axisY ) {
+    context.translate( positionX, positionY );
+    context.rotate( angleInRad );
+    context.drawImage( image, -axisX, -axisY );
+    context.rotate( -angleInRad );
+    context.translate( -positionX, -positionY );
+}
+
 

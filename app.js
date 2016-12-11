@@ -27,7 +27,7 @@ io.on('connection', function(socket){
 
     socket.on('PlayerUpdate', function(data){
         socket.broadcast.emit('PlayerUpdate', data);
-        Game.entities[data.id] = [data.x, data.y, data.size, data.color];
+        Game.entities[data.id] = [data.x, data.y, data.size, data.color, data.angle];
     });
     // player is attempting to eat a piece of grass
     socket.on('EatRequest', function(data){
