@@ -15,13 +15,20 @@ Game.height = 10000;
 Game.initialize = function() {
     this.entities = [];
     this.grass = [];
+    this.bullets = {}; // Track bullets on client
     //TODO add visuals for ending the game
 
-    minimap = document.getElementById("minimap");
-    mini_ctx = minimap.getContext("2d");
+    var minimap = document.getElementById("minimap");
+    var mini_ctx = minimap.getContext("2d");
 
-    c = document.getElementById("main");
-    ctx = c.getContext("2d");
+    var c = document.getElementById("main");
+    var ctx = c.getContext("2d");
+    
+    // Store these in Game object for access in other functions
+    Game.minimap = minimap;
+    Game.mini_ctx = mini_ctx;
+    Game.canvas = c;
+    Game.ctx = ctx;
 };
 
 var startrunning = true;
@@ -30,43 +37,72 @@ Game.run = function() {
     var loops = 0, skipTicks = 1000 / Game.fps,
         maxFrameSkip = 2;
     if (startrunning) {
-        nextGameTick = (new Date).getTime();
+        Game.nextGameTick = (new Date).getTime();
         startrunning = false;
     }
 
-    while ((new Date).getTime() > nextGameTick && loops < maxFrameSkip) {
+    while ((new Date).getTime() > Game.nextGameTick && loops < maxFrameSkip) {
         updateCoordinates();
         //TODO: implement angle in PlayerUpdate
         socket.emit('PlayerUpdate', { id: Player.id, x: Player.x, y: Player.y, size: Player.size, color: Player.color, angle: Player.angle });
         // console.log ( 'sent player location to server' );
-        nextGameTick += skipTicks;
+        Game.nextGameTick += skipTicks;
         loops++;
     }
     // draw as often as possible, only send updates fps a second
     // console.log ( 'drawing to canvas' );
     drawMinimap(Game.entities);
-    drawMap(Game.entities, Game.grass);
+    drawMap(Game.entities, Game.grass, Game.bullets);
 };
 
 /*--------- Minimap drawing functionality --------*/
 function drawMinimap(players) {
-
+    var minimap = Game.minimap;
+    var mini_ctx = Game.mini_ctx;
+    
+    if (!minimap || !mini_ctx) {
+        console.error('Minimap not initialized');
+        return;
+    }
+    
     // get a clean slate
     mini_ctx.clearRect(0, 0, minimap.width, minimap.height);
+    
+    // Draw border for visibility
+    mini_ctx.strokeStyle = 'black';
+    mini_ctx.strokeRect(0, 0, minimap.width, minimap.height);
+    
     var scaleX = minimap.width / Game.width;
     var scaleY = minimap.height / Game.height;
+    
     for (var key in players) {
-        if (players[key] != null && Player.id != key) {
-            //TODO make sure that scaleX is the correct size
-            drawMinimapCircle(getRadius(players[key][2]) * scaleX,players[key][0] * scaleX,players[key][1] * scaleY,'red');
-        }
-        else if (Player.id == key) {
-            drawMinimapCircle(getRadius(players[key][2]) * scaleX,players[key][0] * scaleX,players[key][1] * scaleY,'green');
+        if (players[key] != null) {
+            var player = players[key];
+            var size, x, y;
+            
+            // Handle both array format [x, y, size, color] and object format {x, y, size, color, name, score}
+            if (Array.isArray(player)) {
+                x = player[0];
+                y = player[1];
+                size = player[2];
+            } else {
+                x = player.x;
+                y = player.y;
+                size = player.size;
+            }
+            
+            var radius = Math.max(2, getRadius(size) * scaleX); // Minimum 2px for visibility
+            var xPos = x * scaleX;
+            var yPos = y * scaleY;
+            var color = (Player.id == key) ? 'green' : 'red';
+            
+            drawMinimapCircle(radius, xPos, yPos, color);
         }
     }
 }
 
 function drawMinimapCircle(size, xPos, yPos, color) {
+    var mini_ctx = Game.mini_ctx;
     mini_ctx.beginPath();
     mini_ctx.arc(xPos, yPos, size, 0, 2 * Math.PI);
     mini_ctx.fillStyle = color;
@@ -75,7 +111,9 @@ function drawMinimapCircle(size, xPos, yPos, color) {
 /*------------------------------------------------*/
 
 /*----------- Map drawing functionality ----------*/
-function drawMap(players,grass) {
+function drawMap(players, grass, bullets) {
+    var c = Game.canvas;
+    var ctx = Game.ctx;
     var Width = c.width;
     var Height = c.height;
     //TODO have spacing be controlled based on the size of the player
@@ -103,12 +141,28 @@ function drawMap(players,grass) {
 
     for (var key in players) {
         if (Player.id != key && players[key] != null) {
-            //TODO implement enemy ram
-            var offsetX = players[key][0] - Player.x;
-            var offsetY = players[key][1] - Player.y;
-            var radius = getRadius(players[key][2]);
+            var player = players[key];
+            var x, y, size, color;
+            
+            // Handle both array format [x, y, size, color] and object format {x, y, size, color, name, score}
+            if (Array.isArray(player)) {
+                x = player[0];
+                y = player[1];
+                size = player[2];
+                color = player[3];
+            } else {
+                x = player.x;
+                y = player.y;
+                size = player.size;
+                color = player.color;
+            }
+            
+            var offsetX = x - Player.x;
+            var offsetY = y - Player.y;
+            var radius = getRadius(size);
             if (Math.abs(offsetX) < Width/2 + radius && Math.abs(offsetY) < Height/2 + radius) {
-                drawCircle(radius, Width/2 + offsetX, Height/2 + offsetY, players[key][3]);
+                drawCircle(radius, Width/2 + offsetX, Height/2 + offsetY, color);
+                //TODO implement enemy ram
                 //TODO Make this a function?
                 // rotateAndPaintImage(ctx, img, Player.angle, Width/2 - Player.radius/2, Height/2 - Player.radius/2, Player.radius, Player.radius );
                 // ctx.translate(Width/2 + offsetX, Height/2 + offsetY);
@@ -136,7 +190,8 @@ function drawMap(players,grass) {
             if (Math.abs(offsetX) < Width / 2 + GRASS_SIZE && Math.abs(offsetY) < Height / 2 + GRASS_SIZE) {
                 if (Math.abs(offsetX) < Player.radius + GRASS_SIZE && Math.abs(offsetY) < Player.radius + GRASS_SIZE) {
                     socket.emit('EatRequest', {id: i, x: grass[i].x, y: grass[i].y});
-                    grass[i] = null;
+                    // Don't set to null here - wait for server confirmation
+                    // grass[i] = null;
                 }
                 else {
                     //TODO make grass dynamic. Remove all instances of GRASS_SIZE
@@ -145,9 +200,26 @@ function drawMap(players,grass) {
             }
         }
     }
+    
+    // Draw bullets
+    if (bullets) {
+        for (var bulletId in bullets) {
+            var bullet = bullets[bulletId];
+            if (bullet) {
+                var offsetX = bullet.x - Player.x;
+                var offsetY = bullet.y - Player.y;
+                var bulletRadius = 8;
+                
+                if (Math.abs(offsetX) < Width/2 + bulletRadius && Math.abs(offsetY) < Height/2 + bulletRadius) {
+                    drawCircle(bulletRadius, Width/2 + offsetX, Height/2 + offsetY, '#FFD700');
+                }
+            }
+        }
+    }
 }
 
 function drawCircle(size, xPos, yPos, color) {
+    var ctx = Game.ctx;
     ctx.beginPath();
     ctx.arc(xPos, yPos, size, 0, 2 * Math.PI);
     ctx.fillStyle = color;

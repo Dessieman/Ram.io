@@ -13,26 +13,23 @@
 	</head>
 
 	<body>
-	<div id="container">
+	<div id="name-input-screen">
+		<h1>Ram.io</h1>
+		<div class="input-container">
+			<input type="text" id="player-name" placeholder="Enter your name" maxlength="20" autofocus>
+			<button id="play-button">Play!</button>
+		</div>
+	</div>
+	<div id="container" style="display: none;">
 		<canvas id="main" width="1600" height="900"></canvas>
 		<canvas id="minimap" width="200" height="200"></canvas>
 		<div id="scores">
-			<h1>Top Players</h1>
-			<ol>
-				<li>xXMLG_RAMiO_GODXx</li>
-				<li>Peter is best</li>
-				<li>The Real Ramses</li>
-				<li>James the Shepard</li>
-				<li>Ram, James Ram </li>
-				<li>Shaken, Not Stirred</li>
-				<li>Test Post, plz dont upvote</li>
-				<li>League of Legends is best game</li>
-				<li>Not a Hardcoded value, trust me</li>
-				<li>We Have the Best Rams, Believe Me</li>
+			<h1>Leaderboard</h1>
+			<ol id="leaderboard">
 			</ol>
 		</div>
 		<div id="health">
-			Health
+			<span id="health-text">Score: 0</span>
 		</div>
 		<canvas id="post-death"></canvas>
 	</div>

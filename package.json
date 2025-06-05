@@ -4,7 +4,14 @@
   "description": "A Slitherio/Agario type game",
   "dependencies": {
     "express": "^4.10.2",
-    "socket.io": "^1.4.8"
+    "socket.io": "^4.8.1"
   },
-  "contributors": ["Chris Brajer", "Andrew Davis", "Griffin Wilson"]
+  "contributors": [
+    "Chris Brajer",
+    "Andrew Davis",
+    "Griffin Wilson"
+  ],
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
 }

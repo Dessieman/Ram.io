@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ram.io Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #status {
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 5px;
+            margin: 5px 0;
+        }
+        .pass {
+            color: green;
+        }
+        .fail {
+            color: red;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ram.io Client Test</h1>
+    <div id="status">
+        <h2>Test Results:</h2>
+        <div id="results"></div>
+    </div>
+    
+    <h2>Game Canvases:</h2>
+    <canvas id="main" width="800" height="600"></canvas>
+    <canvas id="minimap" width="200" height="200"></canvas>
+    
+    <h2>Resources:</h2>
+    <img id="playerImg" src="/resources/playerRamio.svg" width="50" height="50">
+    <img id="enemyImg" src="/resources/enemyRam.svg" width="50" height="50">
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="jquery-3.1.1.min.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(test, passed) {
+            const div = document.createElement('div');
+            div.className = 'test-result ' + (passed ? 'pass' : 'fail');
+            div.textContent = (passed ? '✓' : '✗') + ' ' + test;
+            results.appendChild(div);
+        }
+        
+        // Test resource loading
+        const playerImg = document.getElementById('playerImg');
+        const enemyImg = document.getElementById('enemyImg');
+        
+        playerImg.onload = () => addResult('Player SVG loaded', true);
+        playerImg.onerror = () => addResult('Player SVG loaded', false);
+        
+        enemyImg.onload = () => addResult('Enemy SVG loaded', true);
+        enemyImg.onerror = () => addResult('Enemy SVG loaded', false);
+        
+        // Test canvas availability
+        const mainCanvas = document.getElementById('main');
+        const minimapCanvas = document.getElementById('minimap');
+        
+        addResult('Main canvas available', mainCanvas && mainCanvas.getContext);
+        addResult('Minimap canvas available', minimapCanvas && minimapCanvas.getContext);
+        
+        // Load game scripts
+        const scripts = ['player.js', 'game.js', 'clientCSinteractions.js', 'setup.js'];
+        let loadedScripts = 0;
+        
+        scripts.forEach(script => {
+            const scriptEl = document.createElement('script');
+            scriptEl.src = script;
+            scriptEl.onload = () => {
+                loadedScripts++;
+                if (loadedScripts === scripts.length) {
+                    addResult('All game scripts loaded', true);
+                    testGameFunctionality();
+                }
+            };
+            scriptEl.onerror = () => {
+                addResult('Failed to load ' + script, false);
+            };
+            document.body.appendChild(scriptEl);
+        });
+        
+        function testGameFunctionality() {
+            // Test game objects
+            addResult('Game object exists', typeof Game !== 'undefined');
+            addResult('Player object exists', typeof Player !== 'undefined');
+            addResult('Socket connected', typeof socket !== 'undefined' && socket.connected);
+            
+            // Test functions
+            addResult('getRadius function exists', typeof getRadius === 'function');
+            addResult('updateCoordinates function exists', typeof updateCoordinates === 'function');
+            
+            // Test Socket.io events
+            setTimeout(() => {
+                if (socket && socket.connected) {
+                    addResult('Socket.io connection established', true);
+                    
+                    // Check if we received PlayerSetup
+                    if (Player.id) {
+                        addResult('Player initialized with ID: ' + Player.id, true);
+                        addResult('Game entities initialized', Game.entities !== undefined);
+                        addResult('Game grass initialized', Game.grass !== undefined);
+                    } else {
+                        addResult('Player initialization pending...', false);
+                    }
+                } else {
+                    addResult('Socket.io connection failed', false);
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

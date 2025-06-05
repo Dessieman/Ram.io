@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ram body -->
+  <ellipse cx="50" cy="60" rx="30" ry="25" fill="#f0f0f0" stroke="#333" stroke-width="2"/>
+  
+  <!-- Ram head -->
+  <circle cx="50" cy="35" r="20" fill="#f0f0f0" stroke="#333" stroke-width="2"/>
+  
+  <!-- Horns -->
+  <path d="M 35 30 Q 25 20 20 25" fill="none" stroke="#8B4513" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 65 30 Q 75 20 80 25" fill="none" stroke="#8B4513" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Eyes -->
+  <circle cx="42" cy="35" r="3" fill="#000"/>
+  <circle cx="58" cy="35" r="3" fill="#000"/>
+  
+  <!-- Nose -->
+  <ellipse cx="50" cy="42" rx="4" ry="3" fill="#FFB6C1"/>
+  
+  <!-- Legs -->
+  <rect x="35" y="75" width="8" height="15" fill="#333" rx="4"/>
+  <rect x="57" y="75" width="8" height="15" fill="#333" rx="4"/>
+</svg>
